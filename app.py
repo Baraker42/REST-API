@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 from flask_restful import Resource, Api
+import json
 
 app = Flask(__name__)
 api = Api(app)
@@ -50,10 +51,19 @@ def filter_movies(movies, name):
     else:
         return movies
 
-def get_movie_by_id(movies, id):
+"""def get_movie_by_id(movies, id):
     for movie in movies:
         if movie["id"] == id:
-            return movie
+            return movie"""
+
+def represent_movies(movies, base_url):
+    movies_list = []
+    for movie in movies:
+        movies_list.append({
+            "name":movie["name"],
+            "url": "{0}/movies/{1}".format(base_url, movie["id"])
+        })
+    return json.dumps(movies_list)
 
 
 class Movies_filter(Resource):
@@ -62,9 +72,23 @@ class Movies_filter(Resource):
         resultado = filter_movies(movies, name)
         return resultado
 
+class MovieListResource():
+
+    def get(self):
+        name = request.args.get("name")
+        base_url = request.base_url
+
+        filtered_movies = filter_movies(movies, name)
+        return represent_movies(filtered_movies, base_url)
+
 class MovieDetailResource(Resource):
     def get(self,id):
-        return get_movie_by_id(movies, id)
+        #movie = get_movie_by_id(movies, id)
+        return "haló?"
+        """if "404" in movie:
+            return "není není"
+        else:
+            return json.dumps(movie)"""
 
 api.add_resource(Movies_filter, "/","/movies")
 api.add_resource(MovieDetailResource,"/movies/<int:id>",endpoint="movies")
