@@ -7,7 +7,9 @@ import json
 #set basic interface
 app = Flask(__name__)
 api = Api(app)
-app.config["SQLALCHEMY_DATABASE_URI"] ="sqlite:///database.db" #"mysql+pymysql://root:myslq42dbpff@localhost/movies"#
+#app.config["SQLALCHEMY_DATABASE_URI"] ="mysql+pymysql://root:myslq42dbpff@localhost/test"#"sqlite:///database.db" #
+app.config["SQLALCHEMY_DATABASE_URI"] ="sqlite:///database.db" 
+
 db = SQLAlchemy(app)
 
 #model for restaurant
@@ -139,7 +141,7 @@ class Restaurant(Resource):
         db.session.commit()
         return result
 
-    @marshal_with(resource_fields_restaurant)
+
     def delete(self, restaurant_id):
         result = Restaurant_model.query.filter_by(id=restaurant_id).first()
 
@@ -149,7 +151,7 @@ class Restaurant(Resource):
         db.session.delete(result)
 
         db.session.commit()
-        return
+        return {"message": "Restaurant was successfully deleted"}
 
 #class for request all meals in specific restaurant
 class RestaurantMenu(Resource):
@@ -197,7 +199,7 @@ class PatchMeal(Resource):
         db.session.commit()
         return result
 
-    @marshal_with(resource_fields_menu)
+
     def delete(self, meal_id):
         result = Menu_model.query.filter_by(id=meal_id).first()
 
@@ -206,7 +208,7 @@ class PatchMeal(Resource):
 
         db.session.delete(result)
         db.session.commit()
-        return
+        return{"message":"Meal was successfully deleted"}
 
 #routes for request classes
 api.add_resource(AllRestaurants,"/restaurant/")
@@ -215,10 +217,6 @@ api.add_resource(RestaurantMenu,"/<int:restaurant_id>/menu")
 
 api.add_resource(NewMeal,"/<int:restaurant_id>/new_meal")
 api.add_resource(PatchMeal, "/meal/<int:meal_id>")
-
-
-
-
 
 
 if __name__ == "__main__":

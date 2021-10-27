@@ -12,13 +12,14 @@ BASE = "http://127.0.0.1:5000/"
 #print(response.json())
 #response = requests.get(BASE + "meals")
 #response = requests.patch(BASE + "meal/1",{"name":"koprovka"})
+response = requests.delete(BASE + "meal/1")
 #response = requests.delete(BASE + "restaurant/1")
 #print(response.json())
 
 #response = requests.put(BASE + "2/new_meal",{"name":"zelnacka","day":"pondeli","price":"50.00"})
 #response = requests.get(BASE + "restaurant/55")
 
-response = requests.get(BASE + "1/menu")
+#response = requests.get(BASE + "1/menu")
 #response = requests.delete(BASE + "/meal/1")
 #response = requests.get(BASE + "restaurant/")
 print(response.json())
