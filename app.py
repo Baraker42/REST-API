@@ -2,6 +2,7 @@
 from flask import abort, Flask
 from flask_restful import Api, Resource, reqparse, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
+import json
 
 #set basic interface
 app = Flask(__name__)
@@ -15,10 +16,11 @@ class Restaurant_model(db.Model):
     name = db.Column(db.String(100), nullable=False)
     contact = db.Column(db.String(100), nullable=False)
     opening_hours = db.Column(db.String(12),nullable=False)
+    address = db.Column(db.String(100), nullable=False)
     menu = db.relationship("Menu_model", backref="restaurant",lazy=True)
 
     def __repr__(self):
-        return "Restaurant(name={name}, contact={contact}, opening={opening_hours})"
+        return "Restaurant(id={id}, name={name})"
 
 #model for meals/menu
 class Menu_model(db.Model):
@@ -39,12 +41,14 @@ restaurant_put_args = reqparse.RequestParser()
 restaurant_put_args.add_argument("name", type=str, help="Name of the restaurant is required", required=True)
 restaurant_put_args.add_argument("contact", type=str, help="Contact of the restaurant is required", required=True)
 restaurant_put_args.add_argument("opening_hours", type=str, help="Opening hours of the restaurant is required", required=True)
+restaurant_put_args.add_argument("address", type=str, help="Address of the restaurant is required", required=True)
 
 #arguments for update restaurant
 restaurant_update_args = reqparse.RequestParser()
 restaurant_update_args.add_argument("name", type=str, help="Name of the restaurant")
 restaurant_update_args.add_argument("contact", type=str, help="Contact of the restaurant")
 restaurant_update_args.add_argument("opening_hours", type=str, help="Opening hours of the restaurant")
+restaurant_update_args.add_argument("address", type=str, help="Address of the restaurant")
 
 #arguments for add new meal
 meal_put_args = reqparse.RequestParser()
@@ -64,6 +68,12 @@ resource_fields_restaurant = {
     "name":fields.String,
     "contact":fields.String,
     "opening_hours":fields.String,
+    "address":fields.String,
+}
+#create resource for short description
+resource_fields_restaurant_short = {
+    "id":fields.Integer,
+    "name":fields.String,
 }
 
 resource_fields_menu = {
@@ -74,15 +84,75 @@ resource_fields_menu = {
     "restaurant_id":fields.Integer,
 }
 
+
 class AllRestaurants(Resource):
-    @marshal_with(resource_fields_restaurant)
+    #class for request all restaurants
+    @marshal_with(resource_fields_restaurant_short)
     def get(self):
         result = Restaurant_model.query.order_by(Restaurant_model.id).all()
         if not result:
             abort(404, description="No restaurant found")
         return result
 
+    #create new restaurant
+    @marshal_with(resource_fields_restaurant)
+    def put(self):
+        args = restaurant_put_args.parse_args()
+        all_restaurants = Restaurant_model.query.order_by(Restaurant_model.id).all()
+        if len(all_restaurants) != 0:
+            restaurant_id = all_restaurants[(len(all_restaurants))-1].id
+            restaurant_id += 1
+        else:
+            restaurant_id = 1
+        restaurant = Restaurant_model(id=restaurant_id, name=args["name"],contact=args["contact"],opening_hours=args["opening_hours"],address=args["address"])
+        db.session.add(restaurant)
+        db.session.commit()
+        return restaurant, 201
+
+
+#class for request specific restaurant information
 class Restaurant(Resource):
+    @marshal_with(resource_fields_restaurant)
+    def get(self, restaurant_id):
+        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
+        if not result:
+            abort(404, description="Restaurant ID not found")
+        return result
+
+
+    @marshal_with(resource_fields_restaurant)
+    def patch(self, restaurant_id):
+        args = restaurant_update_args.parse_args()
+        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
+
+        if not result:
+            abort(404, description="Restaurant with this ID doesn´t exists")
+        if args["name"]:
+            result.name = args["name"]
+        if args["contact"]:
+            result.contact = args["contact"]
+        if args["opening_hours"]:
+            result.opening_hours = args["opening_hours"]
+        if args["address"]:
+            result.address = args["address"]
+
+        db.session.commit()
+        return result
+
+    @marshal_with(resource_fields_restaurant)
+    def delete(self, restaurant_id):
+        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
+
+        if not result:
+            abort(404, description="Restaurant ID not found")
+
+        db.session.delete(result)
+
+        db.session.commit()
+        return
+
+#class for request all meals in specific restaurant
+class RestaurantMenu(Resource):
     @marshal_with(resource_fields_menu)
     def get(self, restaurant_id):
         result = Restaurant_model.query.filter_by(id=restaurant_id).first()
@@ -90,80 +160,65 @@ class Restaurant(Resource):
             abort(404, description="Restaurant ID not found")
         return result.menu
 
-    @marshal_with(resource_fields_restaurant)
-    def put(self,restaurant_id):
-        args = restaurant_put_args.parse_args()
-        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
-        if result:
-            abort(409, description="Restaurant with this ID already exists")
-        restaurant = Restaurant_model(id=restaurant_id, name=args["name"],contact=args["contact"],opening_hours=args["opening_hours"])
-        print(restaurant)
-        db.session.add(restaurant)
-        db.session.commit()
-        return restaurant, 201
-
-    @marshal_with(resource_fields_restaurant)
-    def patch(self, restaurant_id):
-        args = restaurant_update_args.parse_args()
-        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
-        if not result:
-            abort(404, description="Restaurant with this ID doesn´t exists")
-
-        if args["name"]:
-            result.name = args["name"]
-        if args["contact"]:
-            result.contact = args["contact"]
-        if args["opening_hours"]:
-            result.opening_hours = args["opening_hours"]
-
-        db.session.commit()
-
-        return result
-
-    @marshal_with(resource_fields_restaurant)
-    def delete(self, restaurant_id):
-        result = Restaurant_model.query.filter_by(id=restaurant_id).first()
-        if not result:
-            abort(404, description="Video not found")
-        db.session.delete(result)
-        db.session.commit()
-        return "Resaturant was deleted successfully", 204
-
-class AllMeal(Resource):
+class NewMeal(Resource):
     @marshal_with(resource_fields_menu)
-    def get():
-        return
-
-class Meal(Resource):
-    @marshal_with(resource_fields_menu)
-    def get(self, restaurantid, meal_id):
-        restid = Restaurant_model.query.filter_by(id=restaurantid).first()
-        result = Menu_model.query.filter_by(id=meal_id).first()
-        if not result:
-            abort(404, description="Meal ID not found")
-        return restid
-
-    @marshal_with(resource_fields_menu)
-    def put(self, restaurantid, meal_id):
+    def put(self, restaurant_id):
         args = meal_put_args.parse_args()
-        result = Menu_model.query.filter_by(id=meal_id).first()
-
-        restid = Restaurant_model.query.filter_by(id=restaurantid).first()
-
-        if result:
-            abort(409, description="Meal with this ID already exists")
-
-        meal = Menu_model(id=meal_id, name=args["name"],day=args["day"],price=args["price"],restaurant=restid)
+        all_meals = Menu_model.query.order_by(Menu_model.id).all()
+        if len(all_meals) != 0:
+            menu_id = all_meals[(len(all_meals))-1].id
+            menu_id += 1
+        else:
+            menu_id = 1
+        restid = Restaurant_model.query.filter_by(id=restaurant_id).first()
+        if not restid:
+            abort(404, description="Restaurant id not exists.")
+        meal = Menu_model(id=menu_id, name=args["name"],day=args["day"],price=args["price"],restaurant=restid)
 
         db.session.add(meal)
         db.session.commit()
         return meal, 201
 
 
-api.add_resource(Restaurant,"/restaurant/<int:restaurant_id>")
+class PatchMeal(Resource):
+    @marshal_with(resource_fields_menu)
+    def patch(self, meal_id):
+        args = meal_patch_args.parse_args()
+        result = Menu_model.query.filter_by(id=meal_id).first()
+        if not result:
+            abort(404, description="Meal with this ID doesn´t exists")
+        if args["name"]:
+            result.name = args["name"]
+        if args["day"]:
+            result.day = args["day"]
+        if args["price"]:
+            result.price = args["price"]
+
+        db.session.commit()
+        return result
+
+    @marshal_with(resource_fields_menu)
+    def delete(self, meal_id):
+        result = Menu_model.query.filter_by(id=meal_id).first()
+
+        if not result:
+            abort(404, description="Meal with this ID doesn´t exists")
+
+        db.session.delete(result)
+        db.session.commit()
+        return
+
+#routes for request classes
 api.add_resource(AllRestaurants,"/restaurant/")
-api.add_resource(Meal,"/restaurant/<int:restaurantid>/meal/<int:meal_id>/")
-#api.add_resource(AllMeal,"/restaurant/<int:restaurant_id>/all")
+api.add_resource(Restaurant,"/restaurant/<int:restaurant_id>")
+api.add_resource(RestaurantMenu,"/<int:restaurant_id>/menu")
+
+api.add_resource(NewMeal,"/<int:restaurant_id>/new_meal")
+api.add_resource(PatchMeal, "/meal/<int:meal_id>")
+
+
+
+
 
 
 if __name__ == "__main__":
