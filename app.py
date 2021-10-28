@@ -7,8 +7,9 @@ import json
 #set basic interface
 app = Flask(__name__)
 api = Api(app)
-#app.config["SQLALCHEMY_DATABASE_URI"] ="mysql+pymysql://root:myslq42dbpff@localhost/test"#"sqlite:///database.db" #
-app.config["SQLALCHEMY_DATABASE_URI"] ="sqlite:///database.db" 
+#app.config["SQLALCHEMY_DATABASE_URI"] ="mysql+pymysql://root:myslq42dbpff@localhost/testor"#"sqlite:///database.db" #
+app.config["SQLALCHEMY_DATABASE_URI"] ="sqlite:///database.db"
+
 
 db = SQLAlchemy(app)
 
@@ -36,7 +37,7 @@ class Menu_model(db.Model):
         return "Meal(name={name}, day={day},price={price},restaurant_id{})"
 
 #CREATE DATABASE (only for first run)
-#db.create_all()
+db.create_all()
 
 #arguments for add new restaurant
 restaurant_put_args = reqparse.RequestParser()
@@ -98,7 +99,7 @@ class AllRestaurants(Resource):
 
     #create new restaurant
     @marshal_with(resource_fields_restaurant)
-    def put(self):
+    def post(self):
         args = restaurant_put_args.parse_args()
         all_restaurants = Restaurant_model.query.order_by(Restaurant_model.id).all()
         if len(all_restaurants) != 0:
@@ -123,7 +124,7 @@ class Restaurant(Resource):
 
 
     @marshal_with(resource_fields_restaurant)
-    def patch(self, restaurant_id):
+    def put(self, restaurant_id):
         args = restaurant_update_args.parse_args()
         result = Restaurant_model.query.filter_by(id=restaurant_id).first()
 
@@ -144,7 +145,8 @@ class Restaurant(Resource):
 
     def delete(self, restaurant_id):
         result = Restaurant_model.query.filter_by(id=restaurant_id).first()
-
+        for i in result.menu:
+            db.session.delete(i)
         if not result:
             abort(404, description="Restaurant ID not found")
 
@@ -160,11 +162,14 @@ class RestaurantMenu(Resource):
         result = Restaurant_model.query.filter_by(id=restaurant_id).first()
         if not result:
             abort(404, description="Restaurant ID not found")
+        if(len(result.menu))==0:
+            abort(404, description="This restaurant has no menu yet.")
+
         return result.menu
 
 class NewMeal(Resource):
     @marshal_with(resource_fields_menu)
-    def put(self, restaurant_id):
+    def post(self, restaurant_id):
         args = meal_put_args.parse_args()
         all_meals = Menu_model.query.order_by(Menu_model.id).all()
         if len(all_meals) != 0:
@@ -184,7 +189,7 @@ class NewMeal(Resource):
 
 class PatchMeal(Resource):
     @marshal_with(resource_fields_menu)
-    def patch(self, meal_id):
+    def put(self, meal_id):
         args = meal_patch_args.parse_args()
         result = Menu_model.query.filter_by(id=meal_id).first()
         if not result:
@@ -211,13 +216,13 @@ class PatchMeal(Resource):
         return{"message":"Meal was successfully deleted"}
 
 #routes for request classes
-api.add_resource(AllRestaurants,"/restaurant/")
+api.add_resource(AllRestaurants,"/restaurants/")
 api.add_resource(Restaurant,"/restaurant/<int:restaurant_id>")
-api.add_resource(RestaurantMenu,"/<int:restaurant_id>/menu")
+api.add_resource(RestaurantMenu,"/restaurant/<int:restaurant_id>/menu")
 
 api.add_resource(NewMeal,"/<int:restaurant_id>/new_meal")
 api.add_resource(PatchMeal, "/meal/<int:meal_id>")
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5444 ,debug=True)
