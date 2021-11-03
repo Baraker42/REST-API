@@ -224,5 +224,6 @@ api.add_resource(NewMeal,"/<int:restaurant_id>/new_meal")
 api.add_resource(PatchMeal, "/meal/<int:meal_id>")
 
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5444 ,debug=True)
+#if __name__ == "__main__":
+#    app.run(host='0.0.0.0', port=5444 ,debug=True)
+    
