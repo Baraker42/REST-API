@@ -29,9 +29,9 @@ try:
     my_cursor.execute("CREATE DATABASE IF NOT EXISTS Restauratitos")
     my_cursor.execute("CREATE TABLE IF NOT EXISTS Restaurants(id int PRIMARY KEY AUTO_INCREMENT,name VARCHAR(255) NOT NULL,contact VARCHAR(255) NOT NULL,opening_hours VARCHAR(255) NOT NULL, address VARCHAR(255) NOT NULL)")
     my_cursor.execute("CREATE TABLE IF NOT EXISTS Meals(id int PRIMARY KEY AUTO_INCREMENT, rest_id int NOT NULL, FOREIGN KEY (rest_id) REFERENCES Restaurants(id), name VARCHAR(255) NOT NULL, day VARCHAR(10) NOT NULL, price FLOAT(10) NOT NULL)")
-    print("Database was created successfully")
 except:
-    print("Database already exists")
+    print("Database you try connect, doesn't exist.")
+    quit()
 
 restaurant_put_args = reqparse.RequestParser()
 restaurant_put_args.add_argument("name", type=str, help="Name of the restaurant is required", required=True)
