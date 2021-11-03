@@ -1,22 +1,37 @@
-from flask import Flask, abort, jsonify
+from flask import Flask, abort
 import mysql.connector
 from flask_restful import Api, Resource, reqparse
+from secret import Password
 import json
+import os
 
-db = mysql.connector.connect(
+#There you have to define your connection with MYSQL
+try:
+    db = mysql.connector.connect(
     host="localhost",
     user="root",
-    passwd="mysql42dbpff",
-    database="TestResto"
+    passwd=Password.passwrd,
+    database="Restauratitos"
     )
+
+except:
+    db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd=Password.passwrd,
+    )
+
 app = Flask(__name__)
 api = Api(app)
 my_cursor = db.cursor()
-my_cursor.execute("CREATE DATABASE IF NOT EXISTS TestResto")
 
-my_cursor.execute("CREATE TABLE IF NOT EXISTS Restaurants(id int PRIMARY KEY AUTO_INCREMENT,name VARCHAR(255) NOT NULL,contact VARCHAR(255) NOT NULL,opening_hours VARCHAR(255) NOT NULL, address VARCHAR(255) NOT NULL)")
-my_cursor.execute("CREATE TABLE IF NOT EXISTS Meals(id int PRIMARY KEY AUTO_INCREMENT, rest_id int NOT NULL, FOREIGN KEY (rest_id) REFERENCES Restaurants(id), name VARCHAR(255) NOT NULL, day VARCHAR(10) NOT NULL, price FLOAT(10) NOT NULL)")
-
+try:
+    my_cursor.execute("CREATE DATABASE IF NOT EXISTS Restauratitos")
+    my_cursor.execute("CREATE TABLE IF NOT EXISTS Restaurants(id int PRIMARY KEY AUTO_INCREMENT,name VARCHAR(255) NOT NULL,contact VARCHAR(255) NOT NULL,opening_hours VARCHAR(255) NOT NULL, address VARCHAR(255) NOT NULL)")
+    my_cursor.execute("CREATE TABLE IF NOT EXISTS Meals(id int PRIMARY KEY AUTO_INCREMENT, rest_id int NOT NULL, FOREIGN KEY (rest_id) REFERENCES Restaurants(id), name VARCHAR(255) NOT NULL, day VARCHAR(10) NOT NULL, price FLOAT(10) NOT NULL)")
+    print("Database was created successfully")
+except:
+    print("Database already exists")
 
 restaurant_put_args = reqparse.RequestParser()
 restaurant_put_args.add_argument("name", type=str, help="Name of the restaurant is required", required=True)
