@@ -7,8 +7,8 @@ This REST-API communicates with the MYSQL
 ## Use
 For add or edit restaurants or meals you can use 'curl' or test.py. Script test.py allows you to run more commands suddenly.</br/>
 
-# curl commands
-For GET list of all restaurants on localhost use 'curl http://127.0.0.1:5000/restaurants'<br/>
+### curl commands
+For GET list of all restaurants on localhost use ```curl http://127.0.0.1:5000/restaurants```<br/>
 GET all information about specific restaurant use 'curl http://127.0.0.1:5000/restaurant/+restaurant_id'<br/>
 POST new restaurant use 'curl -X POST -d "name=restaurant_name&contact=contact&opening_hours=opening_hours&address=address" http://127.0.0.1:5000/restaurants/'<br/>
 For update all information using PUT command EXAMPLE'curl -X PUT -d "name=new_restaurant_name" http://127.0.0.1:5000/restaurant/+restaurant_id'<br/>
