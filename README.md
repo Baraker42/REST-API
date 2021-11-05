@@ -5,7 +5,7 @@ You can add, update or delete restaurant or meal informations<br/>
 This REST-API communicates with the MYSQL
 
 ## Use
-For add or edit restaurants or meals you can use 'curl' or test.py. Script test.py allows you to run more commands suddenly.</br/>
+For add or edit restaurants or meals you can use 'curl' or test.py. Script test.py allows you to run more commands suddenly.<br/>
 
 ### curl commands
 For GET list of all restaurants on localhost use ```curl http://127.0.0.1:5000/restaurants```<br/>
