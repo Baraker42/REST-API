@@ -147,14 +147,14 @@ class RestaurantDaily(Resource):
         my_cursor.execute("SELECT * FROM Restaurants WHERE id={0}".format(restaurant_id))
         row = my_cursor.fetchone()
         if row is None:
-            abort(404, description="There is no restaurant wit this ID")
+            abort(404, description="There is no restaurant with this ID")
         my_cursor.execute("SELECT * FROM Meals WHERE rest_id={0} AND day='{1}'".format(restaurant_id, day))
         daily_menu=[]
         for i in my_cursor:
             meal={"id":i[0],"name":i[2],"day":i[3],"price":i[4]}
             daily_menu.append(meal)
         if len(daily_menu)==0:
-            abort(404, description="There are no meals of this day in restaurant yet")
+            abort(404, description="There is no meal on the daily menu for that day")
         return json.dumps(daily_menu)
 
 #Class for creating new meal object
@@ -166,7 +166,7 @@ class NewMeal(Resource):
             db.commit()
             return json.dumps({"name":args["name"], "day":args["day"], "price":args["price"]})
         except:
-            return json.dumps({"message":"There is no such restaurant with this id"})
+            return json.dumps({"message":"There is no restaurant with this id"})
 
 #Class for updating meal(put) or delete it(delete)
 class UpdateMeal(Resource):
